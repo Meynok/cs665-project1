@@ -16,6 +16,11 @@
                     
                     {% if session['user_id'] %}
                         <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                        
+                        {% if session['is_admin'] == 1 %}
+                            <li><a href="{{ url_for('admin_dashboard') }}" style="color: #ffeb3b;">Admin Panel</a></li>
+                        {% endif %}
+
                         <li style="color: white; font-weight: bold;">Hello, {{ session['username'] }}</li>
                         <li><a href="{{ url_for('logout') }}">Logout</a></li>
                     {% else %}

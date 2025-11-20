@@ -56,8 +56,8 @@ def register():
                 current_timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
                 connection.execute(
-                    'INSERT INTO users (user_id, username, email, password_hash, date_created) \
-                        VALUES (NULL, ?, ?, ?, ?)',
+                    'INSERT INTO users (user_id, username, email, password_hash, date_created, is_admin) \
+                        VALUES (NULL, ?, ?, ?, ?, 0)',
                     (username, email, hashed_password, current_timestamp)
                 )
                 connection.commit()
@@ -99,7 +99,10 @@ def login():
             session.clear()
             session['user_id'] = user['user_id']
             session['username'] = user['username']
+            session['is_admin'] = user['is_admin']
             flash(f"Welcome back, {user['username']}!")
+            if user['is_admin'] == 1:
+                return redirect(url_for('admin_dashboard'))
             return redirect(url_for('dashboard'))
 
         flash(error_message)
@@ -132,18 +135,39 @@ def dashboard():
     connection = get_db_connection()
 
     # Fetch projects the user belongs to by joining projects and project_members
-    projects = connection.execute(
-        '''
-        SELECT p.*, pm.role
-        FROM projects p
-        JOIN project_members pm ON p.project_id = pm.project_id
-        WHERE pm.user_id = ?
-        ''',
-        (user_id,)
-    ).fetchall()
+    if session.get('is_admin') == 1:
+        projects = connection.execute('SELECT *, "Admin Access" as role FROM projects').fetchall()
+    else:
+        projects = connection.execute(
+            '''
+            SELECT p.*, pm.role
+            FROM projects p
+            JOIN project_members pm ON p.project_id = pm.project_id
+            WHERE pm.user_id = ?
+            ''',
+            (user_id,)
+        ).fetchall()
 
     connection.close()
     return render_template('dashboard.html', projects=projects)
+
+
+@app.route('/admin')
+def admin_dashboard():
+    """
+    Renders the special Admin Dashboard with global stats and lists.
+    """
+    if 'user_id' not in session or session.get('is_admin') != 1:
+        flash('Access denied. Admins only.')
+        return redirect(url_for('dashboard'))
+
+    connection = get_db_connection()
+    users = connection.execute('SELECT * FROM users').fetchall()
+    projects = connection.execute('SELECT * FROM projects').fetchall()
+    tasks = connection.execute('SELECT * FROM tasks').fetchall()
+    connection.close()
+
+    return render_template('admin.html', users=users, projects=projects, tasks=tasks)
 
 
 @app.route('/create_project', methods=('GET', 'POST'))
@@ -196,7 +220,7 @@ def view_project(project_id):
     """
     Displays details for a specific project, including its tasks.
 
-    Validates that the current user is a member of the project before showing data.
+    Validates that the current user is a `member of the project before showing data.
     Fetches tasks and joins with the users table to show assignee names.
     """
     if 'user_id' not in session:
@@ -211,7 +235,7 @@ def view_project(project_id):
         (project_id, user_id)
     ).fetchone()
 
-    if member is None:
+    if member is None and session.get('is_admin') != 1:
         connection.close()
         flash('You do not have permission to view this project.')
         return redirect(url_for('dashboard'))
@@ -256,7 +280,7 @@ def create_task(project_id):
         (project_id, user_id)
     ).fetchone()
 
-    if member is None:
+    if member is None and session.get('is_admin') != 1:
         connection.close()
         flash('You do not have permission to add tasks to this project.')
         return redirect(url_for('dashboard'))

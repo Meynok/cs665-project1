@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>Admin Panel</h2>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            <h3>Total Users</h3>
+            <p style="font-size: 24px; font-weight: bold;">{{ users|length }}</p>
+        </div>
+        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            <h3>Total Projects</h3>
+            <p style="font-size: 24px; font-weight: bold;">{{ projects|length }}</p>
+        </div>
+        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            <h3>Total Tasks</h3>
+            <p style="font-size: 24px; font-weight: bold;">{{ tasks|length }}</p>
+        </div>
+    </div>
+
+    <h3>All Users</h3>
+    <table border="1" cellpadding="10" cellspacing="0" style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+        <tr style="background: #eee;">
+            <th>ID</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Admin?</th>
+        </tr>
+        {% for user in users %}
+        <tr>
+            <td>{{ user['user_id'] }}</td>
+            <td>{{ user['username'] }}</td>
+            <td>{{ user['email'] }}</td>
+            <td>{% if user['is_admin'] %}Yes{% else %}No{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h3>All Projects</h3>
+    <table border="1" cellpadding="10" cellspacing="0" style="width: 100%; border-collapse: collapse;">
+        <tr style="background: #eee;">
+            <th>ID</th>
+            <th>Project Name</th>
+            <th>Owner ID</th>
+            <th>Action</th>
+        </tr>
+        {% for project in projects %}
+        <tr>
+            <td>{{ project['project_id'] }}</td>
+            <td>{{ project['project_name'] }}</td>
+            <td>{{ project['owner_id'] }}</td>
+            <td><a href="{{ url_for('view_project', project_id=project['project_id']) }}">View</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endblock %}
