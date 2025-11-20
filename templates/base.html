@@ -12,8 +12,8 @@
             <h1>TaskTrack</h1>
             <nav>
                 <ul>
-                    <li><a href="/">Home</a></li>
-                    <!-- TODO: Login/Dashboard links -->
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('register') }}">Register</a></li>
                 </ul>
             </nav>
         </div>
@@ -24,7 +24,7 @@
             {% if messages %}
                 <ul class="flashes">
                 {% for message in messages %}
-                    <li style="color: red;">{{ message }}</li>
+                    <li style="color: red; list-style: none;">{{ message }}</li>
                 {% endfor %}
                 </ul>
             {% endif %}
