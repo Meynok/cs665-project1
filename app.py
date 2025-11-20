@@ -542,5 +542,97 @@ def delete_task(task_id):
     return redirect(url_for('view_project', project_id=project_id))
 
 
+@app.route('/stats')
+def stats():
+    """
+    Renders the data visualization page.
+    Calculates task counts grouped by status for the Chart.js visualization.
+    """
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    connection = get_db_connection()
+
+    stats_data = {'To-Do': 0, 'In-Progress': 0, 'Done': 0}
+
+    if session.get('is_admin') == 1:
+        # Admins see global stats
+        rows = connection.execute(
+            'SELECT status, COUNT(*) as count FROM tasks GROUP BY status'
+        ).fetchall()
+    else:
+        # Users see stats for their projects only
+        rows = connection.execute(
+            '''
+            SELECT t.status, COUNT(*) as count
+            FROM tasks t
+            JOIN project_members pm ON t.project_id = pm.project_id
+            WHERE pm.user_id = ?
+            GROUP BY t.status
+            ''',
+            (user_id,)
+        ).fetchall()
+
+    connection.close()
+
+    for row in rows:
+        if row['status'] in stats_data:
+            stats_data[row['status']] = row['count']
+
+    return render_template('stats.html', stats_data=stats_data)
+
+
+@app.route('/project/<int:project_id>/add_member', methods=('GET', 'POST'))
+def add_member(project_id):
+    """
+    Allows Project Admins to add other users to the project.
+    """
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    connection = get_db_connection()
+
+    member = connection.execute(
+        'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
+        (project_id, user_id)
+    ).fetchone()
+
+    if member is None and session.get('is_admin') != 1:
+        connection.close()
+        flash('You do not have permission to manage members for this project.')
+        return redirect(url_for('dashboard'))
+
+    if request.method == 'POST':
+        username_to_add = request.form['username']
+        role = request.form['role']
+
+        new_member = connection.execute('SELECT * FROM users WHERE username = ?', (username_to_add,)).fetchone()
+
+        if new_member is None:
+            flash(f'User "{username_to_add}" not found.')
+        else:
+            existing = connection.execute(
+                'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
+                (project_id, new_member['user_id'])
+            ).fetchone()
+
+            if existing:
+                flash(f'{username_to_add} is already a member of this project.')
+            else:
+                connection.execute(
+                    'INSERT INTO project_members (project_id, user_id, role) VALUES (?, ?, ?)',
+                    (project_id, new_member['user_id'], role)
+                )
+                connection.commit()
+                flash(f'{username_to_add} added to project successfully!')
+                connection.close()
+                return redirect(url_for('view_project', project_id=project_id))
+
+    connection.close()
+    return render_template('add_member.html', project_id=project_id)
+
+
 if __name__ == '__main__':
     app.run(debug=True)

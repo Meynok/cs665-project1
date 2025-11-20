@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>Task Statistics</h2>
+    <p>Visualizing task progress across your projects.</p>
+
+    <div style="width: 50%; margin: 40px auto;">
+        <canvas id="taskStatusChart"></canvas>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('taskStatusChart').getContext('2d');
+        const taskStatusChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['To-Do', 'In-Progress', 'Done'],
+                datasets: [{
+                    label: '# of Tasks',
+                    data: [
+                        {{ stats_data['To-Do'] }},
+                        {{ stats_data['In-Progress'] }},
+                        {{ stats_data['Done'] }}
+                    ],
+                    backgroundColor: [
+                        '#dc3545',
+                        '#ffc107',
+                        '#28a745'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>Add Member to Project</h2>
+    <form method="post">
+        <label for="username">Username of user to add</label><br>
+        <input type="text" name="username" placeholder="e.g. alice" required style="width: 300px;">
+        <br><br>
+
+        <label for="role">Role</label><br>
+        <select name="role" style="width: 308px; padding: 5px;">
+            <option value="Member">Member</option>
+            <option value="Admin">Admin</option>
+        </select>
+        <br><br>
+
+        <button type="submit" style="background-color: #28a745; color: white; padding: 10px 20px; border: none; cursor: pointer;">Add Member</button>
+        <a href="{{ url_for('view_project', project_id=project_id) }}" style="margin-left: 10px;">Cancel</a>
+    </form>
+{% endblock %}
+```
+
+**3. Updated File:** `templates/project_details.html`
+(Add a button to access this new page. Place it right next to the "Add Task" button.)
+
+*Find this section:*
+```html
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; margin-bottom: 10px;">
+        <h3>Tasks</h3>
+        <a href="{{ url_for('create_task', project_id=project['project_id']) }}" class="button" style="background-color: #28a745; color: white; padding: 5px 10px; text-decoration: none; border-radius: 5px; font-size: 14px;">+ Add Task</a>
+    </div>
+```
+
+*Replace it with this:*
+```html
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; margin-bottom: 10px;">
+        <h3>Tasks</h3>
+        <div>
+            <a href="{{ url_for('add_member', project_id=project['project_id']) }}" class="button" style="background-color: #17a2b8; color: white; padding: 5px 10px; text-decoration: none; border-radius: 5px; font-size: 14px; margin-right: 10px;">+ Add Member</a>
+            <a href="{{ url_for('create_task', project_id=project['project_id']) }}" class="button" style="background-color: #28a745; color: white; padding: 5px 10px; text-decoration: none; border-radius: 5px; font-size: 14px;">+ Add Task</a>
+        </div>
+    </div>
