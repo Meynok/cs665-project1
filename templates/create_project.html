@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>Create New Project</h2>
+    <form method="post">
+        <label for="project_name">Project Name</label><br>
+        <input type="text" name="project_name" placeholder="e.g., Website Redesign" required style="width: 300px;">
+        <br><br>
+        
+        <label for="description">Description</label><br>
+        <textarea name="description" placeholder="Project details..." rows="4" style="width: 300px;"></textarea>
+        <br><br>
+
+        <button type="submit" style="background-color: #007bff; color: white; padding: 10px 20px; border: none; cursor: pointer;">Create Project</button>
+        <a href="{{ url_for('dashboard') }}" style="margin-left: 10px;">Cancel</a>
+    </form>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>My Dashboard</h2>
+    <div style="margin-bottom: 20px;">
+        <a href="{{ url_for('create_project') }}" class="button" style="background-color: #28a745; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px;">+ Create New Project</a>
+    </div>
+
+    {% if projects %}
+        <table border="1" cellpadding="10" cellspacing="0" style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: #eee;">
+                    <th>Project Name</th>
+                    <th>Description</th>
+                    <th>My Role</th>
+                    <th>Created At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for project in projects %}
+                    <tr>
+                        <td>{{ project['project_name'] }}</td>
+                        <td>{{ project['description'] }}</td>
+                        <td>{{ project['role'] }}</td>
+                        <td>{{ project['created_at'] }}</td>
+                        <td>
+                            <!-- TODO: View/Edit buttons -->
+                            <a href="#">View</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>You are not a member of any projects yet.</p>
+    {% endif %}
+{% endblock %}

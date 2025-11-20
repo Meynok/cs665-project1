@@ -13,7 +13,16 @@
             <nav>
                 <ul>
                     <li><a href="{{ url_for('index') }}">Home</a></li>
-                    <li><a href="{{ url_for('register') }}">Register</a></li>
+                    
+                    {% if session['user_id'] %}
+                        <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                        <li style="color: white; font-weight: bold;">Hello, {{ session['username'] }}</li>
+                        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                    {% else %}
+                        <!-- Links visible to guests -->
+                        <li><a href="{{ url_for('login') }}">Login</a></li>
+                        <li><a href="{{ url_for('register') }}">Register</a></li>
+                    {% endif %}
                 </ul>
             </nav>
         </div>
@@ -24,7 +33,7 @@
             {% if messages %}
                 <ul class="flashes">
                 {% for message in messages %}
-                    <li style="color: red; list-style: none;">{{ message }}</li>
+                    <li style="color: red; list-style: none; padding: 10px; background: #fee; border: 1px solid red; margin-bottom: 10px;">{{ message }}</li>
                 {% endfor %}
                 </ul>
             {% endif %}
