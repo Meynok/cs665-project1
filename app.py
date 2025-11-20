@@ -391,5 +391,88 @@ def edit_task(task_id):
     return render_template('edit_task.html', task=task, members=members)
 
 
+@app.route('/project/<int:project_id>/delete', methods=('POST',))
+def delete_project(project_id):
+    """
+    Handles the deletion of a project.
+    Only Owners or Admins can delete a project.
+    """
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    connection = get_db_connection()
+
+    project = connection.execute('SELECT * FROM projects WHERE project_id = ?', (project_id,)).fetchone()
+
+    if project is None:
+        connection.close()
+        flash('Project not found.')
+        return redirect(url_for('dashboard'))
+
+    if project['owner_id'] != user_id and session.get('is_admin') != 1:
+        connection.close()
+        flash('You do not have permission to delete this project.')
+        return redirect(url_for('dashboard'))
+
+    # Manual cascade delete
+    connection.execute(
+        'DELETE FROM comments WHERE task_id IN (SELECT task_id FROM tasks WHERE project_id = ?)',
+        (project_id,)
+    )
+    # Delete tasks
+    connection.execute('DELETE FROM tasks WHERE project_id = ?', (project_id,))
+    # Delete members
+    connection.execute('DELETE FROM project_members WHERE project_id = ?', (project_id,))
+    # Delete project
+    connection.execute('DELETE FROM projects WHERE project_id = ?', (project_id,))
+
+    connection.commit()
+    connection.close()
+    flash('Project deleted successfully!')
+    return redirect(url_for('dashboard'))
+
+
+@app.route('/task/<int:task_id>/delete', methods=('POST',))
+def delete_task(task_id):
+    """
+    Handles the deletion of a task.
+    """
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    connection = get_db_connection()
+
+    task = connection.execute('SELECT * FROM tasks WHERE task_id = ?', (task_id,)).fetchone()
+
+    if task is None:
+        connection.close()
+        flash('Task not found.')
+        return redirect(url_for('dashboard'))
+
+    project_id = task['project_id']
+
+    member = connection.execute(
+        'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
+        (project_id, user_id)
+    ).fetchone()
+
+    if member is None and session.get('is_admin') != 1:
+        connection.close()
+        flash('You do not have permission to delete this task.')
+        return redirect(url_for('dashboard'))
+
+    # Delete comments on this task
+    connection.execute('DELETE FROM comments WHERE task_id = ?', (task_id,))
+    # Delete task
+    connection.execute('DELETE FROM tasks WHERE task_id = ?', (task_id,))
+
+    connection.commit()
+    connection.close()
+    flash('Task deleted successfully!')
+    return redirect(url_for('view_project', project_id=project_id))
+
+
 if __name__ == '__main__':
     app.run(debug=True)
