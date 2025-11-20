@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>Add New Task</h2>
+    <form method="post">
+        <label for="task_title">Task Title</label><br>
+        <input type="text" name="task_title" placeholder="e.g., Fix Login Bug" required style="width: 300px;">
+        <br><br>
+        
+        <label for="description">Description</label><br>
+        <textarea name="description" placeholder="Task details..." rows="4" style="width: 300px;"></textarea>
+        <br><br>
+
+        <label for="assignee_id">Assign To</label><br>
+        <select name="assignee_id" style="width: 308px; padding: 5px;">
+            <option value="">-- Unassigned --</option>
+            {% for member in members %}
+                <option value="{{ member['user_id'] }}">{{ member['username'] }}</option>
+            {% endfor %}
+        </select>
+        <br><br>
+
+        <label for="status">Status</label><br>
+        <select name="status" style="width: 308px; padding: 5px;">
+            <option value="To-Do">To-Do</option>
+            <option value="In-Progress">In-Progress</option>
+            <option value="Done">Done</option>
+        </select>
+        <br><br>
+
+        <label for="due_date">Due Date</label><br>
+        <input type="date" name="due_date" style="width: 300px;">
+        <br><br>
+
+        <button type="submit" style="background-color: #007bff; color: white; padding: 10px 20px; border: none; cursor: pointer;">Create Task</button>
+        <a href="{{ url_for('view_project', project_id=project_id) }}" style="margin-left: 10px;">Cancel</a>
+    </form>
+{% endblock %}
+html
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; margin-bottom: 10px;">
+        <h3>Tasks</h3>
+        <a href="{{ url_for('create_task', project_id=project['project_id']) }}" class="button" style="background-color: #28a745; color: white; padding: 5px 10px; text-decoration: none; border-radius: 5px; font-size: 14px;">+ Add Task</a>
+    </div>

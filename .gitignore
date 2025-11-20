@@ -1,6 +1,5 @@
 .flake8
-fake_db copy.db
-fake_db.db
+*.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

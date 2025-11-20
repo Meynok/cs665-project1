@@ -8,9 +8,9 @@
     
     <p><em>{{ project['description'] }}</em></p>
 
-    <div style="margin-top: 20px; margin-bottom: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; margin-bottom: 10px;">
         <h3>Tasks</h3>
-        <!-- TODO: Add tasks button -->
+        <a href="{{ url_for('create_task', project_id=project['project_id']) }}" class="button" style="background-color: #28a745; color: white; padding: 5px 10px; text-decoration: none; border-radius: 5px; font-size: 14px;">+ Add Task</a>
     </div>
 
     {% if tasks %}

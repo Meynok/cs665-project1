@@ -236,5 +236,65 @@ def view_project(project_id):
     return render_template('project_details.html', project=project, tasks=tasks)
 
 
+@app.route('/project/<int:project_id>/create_task', methods=('GET', 'POST'))
+def create_task(project_id):
+    """
+    Handles the creation of a new task within a specific project.
+
+    GET: Renders the task creation form with a list of potential assignees (project members).
+    POST: Validates input and inserts the new task into the database.
+    """
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    connection = get_db_connection()
+
+    # Ensure user is a member of the project
+    member = connection.execute(
+        'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
+        (project_id, user_id)
+    ).fetchone()
+
+    if member is None:
+        connection.close()
+        flash('You do not have permission to add tasks to this project.')
+        return redirect(url_for('dashboard'))
+
+    if request.method == 'POST':
+        task_title = request.form['task_title']
+        description = request.form['description']
+        assignee_id = request.form['assignee_id']
+        due_date = request.form['due_date']
+        status = request.form['status']
+
+        if not task_title:
+            flash('Task title is required.')
+        else:
+            connection.execute(
+                'INSERT INTO tasks (project_id, assignee_id, task_title, description, status, due_date) \
+                 VALUES (?, ?, ?, ?, ?, ?)',
+                (project_id, assignee_id if assignee_id else None, task_title, description, status, due_date)
+            )
+            connection.commit()
+            connection.close()
+            flash('Task created successfully!')
+            return redirect(url_for('view_project', project_id=project_id))
+
+    # Fetch project members to populate the "Assignee" dropdown
+    members = connection.execute(
+        '''
+        SELECT u.user_id, u.username
+        FROM users u
+        JOIN project_members pm ON u.user_id = pm.user_id
+        WHERE pm.project_id = ?
+        ''',
+        (project_id,)
+    ).fetchall()
+
+    connection.close()
+    return render_template('create_task.html', project_id=project_id, members=members)
+
+
 if __name__ == '__main__':
     app.run(debug=True)
