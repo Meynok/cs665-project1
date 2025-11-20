@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>{{ project['project_name'] }}</h2>
+        <a href="{{ url_for('dashboard') }}" class="button" style="background-color: #6c757d; color: white; padding: 8px 12px; text-decoration: none; border-radius: 5px;">&larr; Back to Dashboard</a>
+    </div>
+    
+    <p><em>{{ project['description'] }}</em></p>
+
+    <div style="margin-top: 20px; margin-bottom: 20px;">
+        <h3>Tasks</h3>
+        <!-- TODO: Add tasks button -->
+    </div>
+
+    {% if tasks %}
+        <table border="1" cellpadding="10" cellspacing="0" style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: #f8f9fa;">
+                    <th>Title</th>
+                    <th>Assigned To</th>
+                    <th>Status</th>
+                    <th>Due Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                    <tr>
+                        <td>{{ task['task_title'] }}</td>
+                        <td>{{ task['assignee_name'] if task['assignee_name'] else 'Unassigned' }}</td>
+                        <td>
+                            <span style="
+                                padding: 5px 10px; border-radius: 4px; font-size: 12px;
+                                background-color: {% if task['status'] == 'Done' %}#d4edda{% elif task['status'] == 'In-Progress' %}#fff3cd{% else %}#f8d7da{% endif %};
+                                color: {% if task['status'] == 'Done' %}#155724{% elif task['status'] == 'In-Progress' %}#856404{% else %}#721c24{% endif %};
+                            ">
+                                {{ task['status'] }}
+                            </span>
+                        </td>
+                        <td>{{ task['due_date'] }}</td>
+                        <td>
+                            <a href="#">Edit</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No tasks found for this project.</p>
+    {% endif %}
+{% endblock %}

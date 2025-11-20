@@ -191,5 +191,50 @@ def create_project():
     return render_template('create_project.html')
 
 
+@app.route('/project/<int:project_id>')
+def view_project(project_id):
+    """
+    Displays details for a specific project, including its tasks.
+
+    Validates that the current user is a member of the project before showing data.
+    Fetches tasks and joins with the users table to show assignee names.
+    """
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    connection = get_db_connection()
+
+    # Security check to ensure the user is a member of this project
+    member = connection.execute(
+        'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
+        (project_id, user_id)
+    ).fetchone()
+
+    if member is None:
+        connection.close()
+        flash('You do not have permission to view this project.')
+        return redirect(url_for('dashboard'))
+
+    # Fetch project details
+    project = connection.execute(
+        'SELECT * FROM projects WHERE project_id = ?',
+        (project_id,)
+    ).fetchone()
+
+    # Fetch tasks (Left join to get assignee name even if task is unassigned)
+    tasks = connection.execute(
+        '''
+        SELECT t.*, u.username as assignee_name
+        FROM tasks t
+        LEFT JOIN users u ON t.assignee_id = u.user_id
+        WHERE t.project_id = ?
+        ''',
+        (project_id,)
+    ).fetchall()
+    connection.close()
+    return render_template('project_details.html', project=project, tasks=tasks)
+
+
 if __name__ == '__main__':
     app.run(debug=True)

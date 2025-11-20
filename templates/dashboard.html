@@ -25,8 +25,7 @@
                         <td>{{ project['role'] }}</td>
                         <td>{{ project['created_at'] }}</td>
                         <td>
-                            <!-- TODO: View/Edit buttons -->
-                            <a href="#">View</a>
+                            <a href="{{ url_for('view_project', project_id=project['project_id']) }}" style="color: #007bff; text-decoration: none;">View</a>
                         </td>
                     </tr>
                 {% endfor %}
