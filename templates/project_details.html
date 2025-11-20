@@ -27,7 +27,11 @@
             <tbody>
                 {% for task in tasks %}
                     <tr>
-                        <td>{{ task['task_title'] }}</td>
+                        <td>
+                            <a href="{{ url_for('view_task', task_id=task['task_id']) }}" style="font-weight: bold; color: #333; text-decoration: none;">
+                                {{ task['task_title'] }}
+                            </a>
+                        </td>
                         <td>{{ task['assignee_name'] if task['assignee_name'] else 'Unassigned' }}</td>
                         <td>
                             <span style="

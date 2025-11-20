@@ -321,6 +321,74 @@ def create_task(project_id):
     return render_template('create_task.html', project_id=project_id, members=members)
 
 
+@app.route('/task/<int:task_id>', methods=('GET', 'POST'))
+def view_task(task_id):
+    """
+    Displays task details and handles comments.
+    GET: Shows task info and list of comments.
+    POST: Adds a new comment to the task.
+    """
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    connection = get_db_connection()
+
+    task = connection.execute(
+        '''
+        SELECT t.*, u.username as assignee_name, p.project_name
+        FROM tasks t
+        LEFT JOIN users u ON t.assignee_id = u.user_id
+        JOIN projects p ON t.project_id = p.project_id
+        WHERE t.task_id = ?
+        ''',
+        (task_id,)
+    ).fetchone()
+
+    if task is None:
+        connection.close()
+        return "Task not found", 404
+
+    project_id = task['project_id']
+
+    member = connection.execute(
+        'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
+        (project_id, user_id)
+    ).fetchone()
+
+    if member is None and session.get('is_admin') != 1:
+        connection.close()
+        flash('You do not have permission to view this task.')
+        return redirect(url_for('dashboard'))
+
+    # Handle new comment
+    if request.method == 'POST':
+        text_content = request.form['text_content']
+        if text_content:
+            current_timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            connection.execute(
+                'INSERT INTO comments (task_id, user_id, text_content, created_at) VALUES (?, ?, ?, ?)',
+                (task_id, user_id, text_content, current_timestamp)
+            )
+            connection.commit()
+            flash('Comment added.')
+            return redirect(url_for('view_task', task_id=task_id))
+
+    comments = connection.execute(
+        '''
+        SELECT c.*, u.username
+        FROM comments c
+        JOIN users u ON c.user_id = u.user_id
+        WHERE c.task_id = ?
+        ORDER BY c.created_at DESC
+        ''',
+        (task_id,)
+    ).fetchall()
+
+    connection.close()
+    return render_template('task_details.html', task=task, comments=comments)
+
+
 @app.route('/task/<int:task_id>/edit', methods=('GET', 'POST'))
 def edit_task(task_id):
     """

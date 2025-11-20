@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div style="margin-bottom: 20px;">
+        <a href="{{ url_for('view_project', project_id=task['project_id']) }}" class="button" style="background-color: #6c757d; color: white; padding: 8px 12px; text-decoration: none; border-radius: 5px;">&larr; Back to Project</a>
+    </div>
+
+    <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        <h2>{{ task['task_title'] }}</h2>
+        <p><strong>Project:</strong> {{ task['project_name'] }}</p>
+        <p><strong>Status:</strong> <span style="padding: 3px 8px; border-radius: 3px; background-color: #eee;">{{ task['status'] }}</span></p>
+        <p><strong>Assigned To:</strong> {{ task['assignee_name'] if task['assignee_name'] else 'Unassigned' }}</p>
+        <p><strong>Due Date:</strong> {{ task['due_date'] }}</p>
+        <hr>
+        <p>{{ task['description'] }}</p>
+    </div>
+
+    <div style="margin-top: 30px;">
+        <h3>Comments</h3>
+        
+        <form method="post" style="margin-bottom: 30px;">
+            <textarea name="text_content" placeholder="Write a comment..." rows="3" style="width: 100%; padding: 10px;" required></textarea>
+            <br><br>
+            <button type="submit" style="background-color: #007bff; color: white; padding: 8px 16px; border: none; cursor: pointer; border-radius: 4px;">Post Comment</button>
+        </form>
+
+        {% if comments %}
+            <div class="comments-list">
+                {% for comment in comments %}
+                    <div style="background-color: #f9f9f9; border: 1px solid #ddd; padding: 15px; border-radius: 5px; margin-bottom: 10px;">
+                        <p style="margin: 0 0 5px 0;"><strong>{{ comment['username'] }}</strong> <span style="font-size: 12px; color: #777; margin-left: 10px;">{{ comment['created_at'] }}</span></p>
+                        <p style="margin: 0;">{{ comment['text_content'] }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="color: #777;">No comments yet. Be the first to comment!</p>
+        {% endif %}
+    </div>
+{% endblock %}
+```
+
+**3. Updated File:** `templates/project_details.html`
+(We will turn the Task Title into a clickable link that takes you to the new Details page.)
+
+*Find the part inside the loop where it displays `{{ task['task_title'] }}`.*
+*It usually looks like `<td>{{ task['task_title'] }}</td>`.*
+
+*Replace that line with:*
+```html
+<td>
+    <a href="{{ url_for('view_task', task_id=task['task_id']) }}" style="font-weight: bold; color: #333; text-decoration: none;">
+        {{ task['task_title'] }}
+    </a>
+</td>
