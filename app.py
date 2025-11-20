@@ -101,6 +101,7 @@ def login():
             session['username'] = user['username']
             session['is_admin'] = user['is_admin']
             flash(f"Welcome back, {user['username']}!")
+
             if user['is_admin'] == 1:
                 return redirect(url_for('admin_dashboard'))
             return redirect(url_for('dashboard'))
@@ -134,7 +135,7 @@ def dashboard():
     user_id = session['user_id']
     connection = get_db_connection()
 
-    # Fetch projects the user belongs to by joining projects and project_members
+    # Fetch projects
     if session.get('is_admin') == 1:
         projects = connection.execute('SELECT *, "Admin Access" as role FROM projects').fetchall()
     else:
@@ -220,7 +221,7 @@ def view_project(project_id):
     """
     Displays details for a specific project, including its tasks.
 
-    Validates that the current user is a `member of the project before showing data.
+    Validates that the current user is a member of the project before showing data.
     Fetches tasks and joins with the users table to show assignee names.
     """
     if 'user_id' not in session:
@@ -229,7 +230,7 @@ def view_project(project_id):
     user_id = session['user_id']
     connection = get_db_connection()
 
-    # Security check to ensure the user is a member of this project
+    # Security check to ensure the user is a member of this project or an admin
     member = connection.execute(
         'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
         (project_id, user_id)
@@ -274,7 +275,7 @@ def create_task(project_id):
     user_id = session['user_id']
     connection = get_db_connection()
 
-    # Ensure user is a member of the project
+    # Ensure user is a member of the project or is admin
     member = connection.execute(
         'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
         (project_id, user_id)
@@ -318,6 +319,76 @@ def create_task(project_id):
 
     connection.close()
     return render_template('create_task.html', project_id=project_id, members=members)
+
+
+@app.route('/task/<int:task_id>/edit', methods=('GET', 'POST'))
+def edit_task(task_id):
+    """
+    Handles editing an existing task.
+
+    GET: Renders the edit form pre-filled with task data.
+    POST: Updates the task details in the database.
+    """
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    connection = get_db_connection()
+
+    task = connection.execute('SELECT * FROM tasks WHERE task_id = ?', (task_id,)).fetchone()
+
+    if task is None:
+        connection.close()
+        return "Task not found", 404
+
+    project_id = task['project_id']
+
+    # Ensure user is a member of the project or is admin
+    member = connection.execute(
+        'SELECT * FROM project_members WHERE project_id = ? AND user_id = ?',
+        (project_id, user_id)
+    ).fetchone()
+
+    if member is None and session.get('is_admin') != 1:
+        connection.close()
+        flash('You do not have permission to edit this task.')
+        return redirect(url_for('dashboard'))
+
+    if request.method == 'POST':
+        task_title = request.form['task_title']
+        description = request.form['description']
+        assignee_id = request.form['assignee_id']
+        status = request.form['status']
+        due_date = request.form['due_date']
+
+        if not task_title:
+            flash('Task title is required.')
+        else:
+            connection.execute(
+                '''
+                UPDATE tasks
+                SET task_title = ?, description = ?, assignee_id = ?, status = ?, due_date = ?
+                WHERE task_id = ?
+                ''',
+                (task_title, description, assignee_id if assignee_id else None, status, due_date, task_id)
+            )
+            connection.commit()
+            connection.close()
+            flash('Task updated successfully!')
+            return redirect(url_for('view_project', project_id=project_id))
+
+    members = connection.execute(
+        '''
+        SELECT u.user_id, u.username
+        FROM users u
+        JOIN project_members pm ON u.user_id = pm.user_id
+        WHERE pm.project_id = ?
+        ''',
+        (project_id,)
+    ).fetchall()
+
+    connection.close()
+    return render_template('edit_task.html', task=task, members=members)
 
 
 if __name__ == '__main__':

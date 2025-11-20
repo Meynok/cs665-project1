@@ -40,7 +40,7 @@
                         </td>
                         <td>{{ task['due_date'] }}</td>
                         <td>
-                            <a href="#">Edit</a>
+                            <a href="{{ url_for('edit_task', task_id=task['task_id']) }}" style="color: #007bff; text-decoration: none;">Edit</a>
                         </td>
                     </tr>
                 {% endfor %}
